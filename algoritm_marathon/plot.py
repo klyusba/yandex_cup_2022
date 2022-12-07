@@ -17,36 +17,37 @@ def gram_layout(D):
     return pos
 
 
-def plot(bikes, parks, cars, D, car_limits, paths=None, filename=None):
+def plot(bikes, parks, cars, D, car_limits, capacity, paths=None, filename=None):
     G = nx.from_numpy_array(D)
     pos = gram_layout(D)
-    colors = ['black', ] + ['green', ] * len(bikes) + ['blue', ] * len(parks)
+    nodes = D.shape[0]
+    colors = ['black', ] + ['green', ] * bikes + ['blue', ] * parks
 
-    nx.draw_networkx_nodes(G, pos, node_size=10, node_color=colors)
     if paths:
-        e = []
-        for path in paths:
-            e.extend(zip(path, path[1:]))
+        rows, cols = {2: (1, 2), 3: (2, 2), 4: (2, 2), 5: (2, 3), 6: (2, 3)}[cars]
+        fig, axs = plt.subplots(rows, cols)
+        for i, path in enumerate(paths):
+            ax = axs[i // cols, i % cols]
+            e = [(0, path[0]), ] + list(zip(path, path[1:]))
+            alpha = [1. if n == 0 or n in path else 0.1 for n in range(nodes)]
+            nx.draw_networkx_nodes(G, pos, ax=ax, node_size=10, node_color=colors, alpha=alpha)
+            nx.draw_networkx_edges(G, pos, ax=ax, edgelist=e)
 
-        nx.draw_networkx_edges(G, pos, edgelist=e)
+        # remove empty axis
+        if cars == 3 or cars == 5:
+            axs[cars // cols, cars % cols].axis('off')
+    else:
+        nx.draw_networkx_nodes(G, pos, node_size=10, node_color=colors)
+
     if filename:
         plt.savefig(filename)
     else:
         plt.show()
 
 
-def plot_all():
-    from utils import read
-
-    for n in range(1, 31):
-        problem = read(n)
-        plot(*problem, filename=f'./img/{n}.png')
-        plt.clf()
-        print(n)
-
-
 if __name__ == "__main__":
-    # plot_all()
-    from utils import read
-    problem = read(n=1)
-    plot(*problem)
+    from utils import read, read_solution
+    N = 1
+    problem = read(N)
+    sol = read_solution(N)
+    plot(*problem, sol)

@@ -3,7 +3,7 @@ from collections import namedtuple
 import numpy as np
 
 CAR_CAPACITY = 25
-Problem = namedtuple('Problem', 'bikes parks cars D car_limits')
+Problem = namedtuple('Problem', 'bikes parks cars D car_limits capacity')
 
 
 def read(n) -> Problem:
@@ -18,10 +18,19 @@ def read(n) -> Problem:
         # ограничения на длину маршрутов автомобилей
         line = f.readline()
         car_limits = list(map(int, line.split()))
-    return Problem(bikes, parks, cars, D, car_limits)
+    return Problem(bikes, parks, cars, D, car_limits, CAR_CAPACITY)
 
 
-def check(routes, bikes, parks, cars, D, car_limits) -> (int, str):
+def read_solution(n) -> list:
+    res = []
+    with open(f'./output/output{n}.txt', 'r') as f:
+        for line in f:
+            path = list(map(int, line.split()))
+            res.append(path[1:])
+    return res
+
+
+def check(routes, bikes, parks, cars, D, car_limits, capacity) -> (int, str):
     if len(routes) != cars: return 0, 'Для каждой машины должен быть маршрут'
 
     for r in routes:
@@ -41,7 +50,7 @@ def check(routes, bikes, parks, cars, D, car_limits) -> (int, str):
         bikes_in = 0
         for n in r:
             if n <= bikes:
-                if bikes_in >= CAR_CAPACITY: return 0, 'При посещении точки с самокатом в автомобиле должно быть строго меньше 25 самокатов'
+                if bikes_in >= capacity: return 0, 'При посещении точки с самокатом в автомобиле должно быть строго меньше 25 самокатов'
                 bikes_in += 1
             else:
                 if bikes_in <= 0: return 0, 'При посещении парковочного места в автомобиле должен быть хотя бы один самокат'
@@ -51,7 +60,7 @@ def check(routes, bikes, parks, cars, D, car_limits) -> (int, str):
     score = sum(len(r) // 2 for r in routes)
     per_dist = score * 1000 / sum(car_limits)
     per_car = score / len(car_limits)
-    return score, f'Самокатов перевезено: {score} из {min(bikes, parks)} ({per_dist:.1f}/км, {per_car:.1f}/авт.)'
+    return score, f'Scooters: {score} / {min(bikes, parks)} ({per_dist:.1f}/km, {per_car:.1f}/car)'
 
 
 def write(routes, n):
@@ -61,11 +70,7 @@ def write(routes, n):
 
 
 def check_output(n):
-    res = []
-    with open(f'./output/output{n}.txt', 'r') as f:
-        for line in f:
-            path = list(map(int, line.split()))
-            res.append(path[1:])
+    res = read_solution(n)
     problem = read(n)
     return check(res, *problem)
 
@@ -73,10 +78,10 @@ def check_output(n):
 def stats():
     bikes_total = 0
     for i in range(1, 31):
-        bikes, parks, cars, D, car_limits = read(i)
+        bikes, parks, cars, D, car_limits, capacity = read(i)
         print(i, bikes, parks, cars)
         bikes_total += min(bikes, parks)
-    print('Максимальный балл', bikes_total, '. Проходной бал 10000')
+    print('Scooters total ', bikes_total, '. Threshold 10000')
 
 
 if __name__ == "__main__":

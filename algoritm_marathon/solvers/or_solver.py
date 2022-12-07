@@ -283,6 +283,22 @@ class Model:
         # TODO
         params = {**self._params, **kwargs}
         search_parameters = cp.DefaultRoutingSearchParameters()
+        search_parameters.first_solution_strategy = enums.FirstSolutionStrategy.LOCAL_CHEAPEST_INSERTION
+        search_parameters.local_search_metaheuristic = enums.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        search_parameters.use_full_propagation = params['use_full_propagation']
+        if params['use_operators']:
+            search_parameters.relocate_expensive_chain_num_arcs_to_consider = 10
+            search_parameters.heuristic_expensive_chain_lns_num_arcs_to_consider = 10
+            search_parameters.local_search_operators.use_make_chain_inactive = cp.BOOL_TRUE
+            search_parameters.local_search_operators.use_extended_swap_active = cp.BOOL_TRUE
+            search_parameters.local_search_operators.use_node_pair_swap_active = cp.BOOL_TRUE
+            search_parameters.local_search_operators.use_tsp_opt = cp.BOOL_TRUE
+            search_parameters.local_search_operators.use_relocate_neighbors = cp.BOOL_TRUE
+            search_parameters.local_search_operators.use_cross_exchange = cp.BOOL_TRUE
+            search_parameters.local_search_operators.use_path_lns = cp.BOOL_TRUE
+            search_parameters.local_search_operators.use_full_path_lns = cp.BOOL_TRUE
+            search_parameters.local_search_operators.use_tsp_lns = cp.BOOL_TRUE
+            search_parameters.local_search_operators.use_inactive_lns = cp.BOOL_TRUE
         search_parameters.log_search = params['log_search']
         return search_parameters
 
@@ -306,29 +322,15 @@ class Model:
         if self._on_solution_callbacks:
             self._routing.AddAtSolutionCallback(self._monitor_callbacks)
 
-        search_parameters = self._make_params()
-        search_parameters.first_solution_strategy = enums.FirstSolutionStrategy.LOCAL_CHEAPEST_INSERTION
-        search_parameters.local_search_metaheuristic = enums.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-        if use_operators:
-            search_parameters.relocate_expensive_chain_num_arcs_to_consider = 10
-            search_parameters.heuristic_expensive_chain_lns_num_arcs_to_consider = 10
-            search_parameters.local_search_operators.use_make_chain_inactive = cp.BOOL_TRUE
-            search_parameters.local_search_operators.use_extended_swap_active = cp.BOOL_TRUE
-            search_parameters.local_search_operators.use_node_pair_swap_active = cp.BOOL_TRUE
-            search_parameters.local_search_operators.use_tsp_opt = cp.BOOL_TRUE
-            search_parameters.local_search_operators.use_relocate_neighbors = cp.BOOL_TRUE
-            search_parameters.local_search_operators.use_cross_exchange = cp.BOOL_TRUE
-            search_parameters.local_search_operators.use_path_lns = cp.BOOL_TRUE
-            search_parameters.local_search_operators.use_full_path_lns = cp.BOOL_TRUE
-            search_parameters.local_search_operators.use_tsp_lns = cp.BOOL_TRUE
-            search_parameters.local_search_operators.use_inactive_lns = cp.BOOL_TRUE
-
+        search_parameters = self._make_params(
+            use_operators=use_operators,
+            use_full_propagation=use_full_propagation
+        )
         search_parameters.time_limit.seconds = time_limit
         if lns_time_limit_ms >= 1000:
             search_parameters.lns_time_limit.seconds = lns_time_limit_ms // 1_000
         else:
             search_parameters.lns_time_limit.nanos = int(lns_time_limit_ms * 1_000_000)
-        search_parameters.use_full_propagation = use_full_propagation
 
         if initial_solution:
             self._routing.CloseModelWithParameters(search_parameters)
