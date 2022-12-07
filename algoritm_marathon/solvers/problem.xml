@@ -1,0 +1,72 @@
+<instance format="XCSP3" type="COP">
+  <variables>
+    <array id="o" note="path"         size="[{{ cars }}][{{ nodes }}]"> 0..{{ nodes-1 }} </array>
+    <array id="c" note="bikes in car" size="[{{ cars }}][{{ nodes }}]"> 0..{{ capacity }} </array>
+    <array id="d" note="distance by car"      size="[{{ cars }}][{{ nodes-1 }}]"> 0..{{ max_distance }} </array>
+    <array id="b" note="bikes peeked in node" size="[{{ cars }}][{{ nodes-1 }}]"> -1..1 </array>
+  </variables>
+  <constraints>
+    <instantiation note="start points">
+      <list> {% for i in range(cars) %}o[{{ i }}][0] {% endfor %}</list>
+      <values> {% for i in range(cars) %}0 {% endfor %}</values>
+    </instantiation>
+    <instantiation note="end points">
+      <list> {% for i in range(cars) %}o[{{ i }}][{{ nodes-1 }}] {% endfor %}</list>
+      <values> {% for i in range(cars) %}{{ nodes-1 }} {% endfor %}</values>
+    </instantiation>
+    <instantiation note="car is empty at the start">
+      <list> {% for i in range(cars) %}c[{{ i }}][0] {% endfor %}</list>
+      <values> {% for i in range(cars) %}0 {% endfor %}</values>
+    </instantiation>
+    <instantiation note="car is empty at in the end">
+      <list> {% for i in range(cars) %}c[{{ i }}][{{ nodes-1 }}] {% endfor %}</list>
+      <values> {% for i in range(cars) %}0 {% endfor %}</values>
+    </instantiation>
+    <cardinality note="each node can be visited at most once">
+      <list> o[][] </list>
+      <values> 0 {% for i in range(1, nodes-1) %}{{ i }} {% endfor %}</values>
+      <occurs> 2 {% for i in range(1, nodes-1) %}0..1 {% endfor %}</occurs>
+    </cardinality>
+    <group note="distance traveled by car">
+      <intension> le(add({% for i in range(nodes-2) %}%{{ i }},{% endfor %}%{{ nodes-2 }}),%{{ nodes-1 }}) </intension>
+        {%- for car in range(cars) %}
+      <args> {% for i in range(nodes-1) %}d[{{ car }}][{{ i }}] {% endfor %} {{ car_limits[car] }} </args>
+        {%- endfor %}
+    </group>
+    <group note="peeking &amp; parking bike">
+      <intension> eq(%0,add(%1,%2)) </intension>
+      {%- for car in range(cars) %}
+      {%- for i in range(nodes-1) %}
+      <args> c[{{ car }}][{{ i+1 }}] b[{{ car }}][{{ i }}] c[{{ car }}][{{ i }}] </args>
+      {%- endfor %}
+      {%- endfor %}
+    </group>
+    <group>
+      <element>
+        <matrix> {% for row in D %}({{ row|join(',') }}){% endfor %} </matrix>
+        <index> %0 %1 </index>
+        <value> %2 </value>
+      </element>
+      {%- for car in range(cars) %}
+      {%- for i in range(nodes-1) %}
+      <args> o[{{ car }}][{{ i }}] o[{{ car }}][{{ i+1 }}] d[{{ car }}][{{ i }}]</args>
+      {%- endfor %}
+      {%- endfor %}
+    </group>
+    <group>
+      <element>
+        <list> {{ bike_costs|join(' ') }} </list>
+        <index> %0 </index>
+        <value> %1 </value>
+      </element>
+      {%- for car in range(cars) %}
+      {%- for i in range(nodes-1) %}
+      <args> o[{{ car }}][{{ i+1 }}] b[{{ car }}][{{ i }}] </args>
+      {%- endfor %}
+      {%- endfor %}
+    </group>
+  </constraints>
+  <objectives>
+    <maximize note="maximize nodes visited" type="nValues"> o[][] </maximize>
+  </objectives>
+</instance>
