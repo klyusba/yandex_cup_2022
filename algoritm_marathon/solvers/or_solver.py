@@ -121,10 +121,7 @@ class Model:
         elif self._distance_type == ConstraintType.SOFT:
             self._distance_soft(distance_callback_index, car_limits)
 
-        # define number of tasks callback function, dummy nodes have a value of 1, normal nodes are 0
         def capacity_callback(from_index):
-            """Returns if this the dummy the node."""
-            # Convert from routing variable Index to demands NodeIndex.
             from_node = self._manager.IndexToNode(from_index)
             return bike_cost[from_node]
 
@@ -150,9 +147,9 @@ class Model:
         )
 
         d = self._routing.GetDimensionOrDie('Distance')
-        for car in range(len(car_limits)):
+        for car, limit in enumerate(car_limits):
             index = self._routing.End(car)
-            d.SetCumulVarSoftUpperBound(index, car_limits[car], self.COEF_DISTANCE)
+            d.SetCumulVarSoftUpperBound(index, limit, self.COEF_DISTANCE)
 
     def _distance_hard(self, callback, car_limits):
         self._routing.AddDimensionWithVehicleCapacity(

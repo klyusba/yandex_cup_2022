@@ -31,5 +31,5 @@ def score():
 
 if __name__ == "__main__":
     main(n_jobs=4)
-    # _solve(24, verbose=3)
+    # _solve(1, verbose=3)
     # score()
